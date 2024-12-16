@@ -1,3 +1,8 @@
+/* 
+ejecucion:  ./../lib/presentacionWin.c ./../lib/TADListaDL.h ./arbol_binario.c ./hashes.c -c
+            gcc TADListaDL.o presentacionWin.o arbol_binario.o main.o hashes.o -o diccionario
+ */
+
 //inlcusion de librerias necesarias
 #include <stdio.h>
 #include <string.h>
@@ -5,7 +10,7 @@
 #include <time.h>
 #include "./../lib/TADListaDL.h"
 #include "./../lib/presentacion.h"
-#include "./../lib/presentacionWin.c"
+#include "./arbol_binario.h"
 #include "./hashes.h"
 
 //Definicion de constantes y variables
@@ -39,6 +44,30 @@ void menu(void){
     while (getchar() != '\n');
 }
 
+//pausar programa
+void pausa (void){
+    printf("Presione cualquier tecla para continuar...");
+    getchar();
+    getchar();
+}
+
+//impresion de menu de busqueda
+void menu_busqueda(void){
+    printf("Busqueda\n");
+    printf("Que desea buscar?\n");
+    printf("1. Por palabra.\n");
+    printf("2. Por letra\n");
+    printf("3. Por frase\n");
+    printf("4. Subcadena\n");
+}
+
+//funcion para limpiar buffer de entrada y evitar caracteres basura
+void limpiarbuffer(void){
+    int c;
+    while ((c=getchar())!= '\n' && c !=EOF){
+    }
+}
+
 int main(void){
     //inicializacion de la tabla hash
     for (int i=0; i< TABLE_SIZE; i++){
@@ -64,7 +93,6 @@ int main(void){
                 printf("\nIngrese la palabra que desea agregar: ");
                 fgets(e.p, sizeof(e.p), stdin);
                 e.p[strcspn(e.p, "\n")]='\0';
-                
                 printf("\nIngrese la definicion de la palabra %s:\n",e.p);
                 fgets(e.d, sizeof(e.d), stdin);
                 e.d[strcspn(e.d, "\n")] = '\0';
@@ -72,11 +100,39 @@ int main(void){
                 //calculo de indice hash
                 c = hash1(e.p);
                 //comprobar colision
-                if (Size(&tablaHash[c])!=0){
-                    c = hash2(e.p);
+                if (Size(&tablaHash[c])!=0){//despues de primer hash, si la lista no esta vacia, revisar que la palabra no exista, si no existe, revisar segundo hash, si tampoco existe, agregar a segundo hash
+                    //funcion para buscar coincidencias
+                    posicion s = buscar(&tablaHash[c],e);
+                    //si ya existe la palabra, imprimir advertencia y regresar a menu.
+                    if (s != NULL){
+                        BorrarPantalla();
+                        MoverCursor(0,0);
+                        printf("ERROR, Intenta ingresar una palabra que ya existe.\n");
+                        pausa();
+                        break;
+                    }
+                    //si no existe en primer hash, hacer segundo hash
+                    int d = hash2(e.p);
+                    //comprobar si la lista del segundo hash esta vacia
+                    if(Size(&tablaHash[d])!= 0){
+                        //si no volver a buscar coincidencia, si no hay coincidencia agregar
+                        s = buscar(&tablaHash[d],e);
+                        //si hay coincidencia, imprimir advertencia
+                        if( s != NULL){
+                            BorrarPantalla();
+                            MoverCursor(0,0);
+                            printf("ERROR, Intenta ingresar una palabra que ya existe.\n");
+                            pausa();
+                            break;
+                        }
+                    }
+                    //si no hay coincidencia o esta vacia la lista, agregar a la lista del segundo hash
+                    Add(&tablaHash[d],e);
+                    c=d;
                     e.c++;
-                    Add(&tablaHash[c],e);
-                }else{
+                }
+                //en caso de que la lista del primer hash este vacia, agregar a esa lista
+                else{
                     Add(&tablaHash[c],e);
                 }
                 //impresion de estadisticas
@@ -92,17 +148,89 @@ int main(void){
                     printf("Sin colisiones.");
                 }
                 break;
+
             //Buscar palabra y su definicion
             case 3:
+                
+                BorrarPantalla();
+                fila = (ANCHO-8)/2;
+                MoverCursor(fila,0);
+                menu_busqueda();
+                scanf("%d",seleccion);
+                switch (seleccion)
+                {
+                    //por palabra
+                case 1:
+                    BorrarPantalla();
+                    fila = (ANCHO-20)/2;
+                    MoverCursor(fila,0);
+                    char palabra;
+                    printf("Busqueda por Palabra\n");
+                    printf("Ingrese la palabra a buscar: ");
+                    scanf("%s",palabra);
+                    
+                    break;
+                
+                //por letra
+                case 2:
+                    break;
+
+                //por frase
+                case 3:
+                    break;
+
+                //por subcadena
+                case 4:
+                    break;
+                
+                default:
+                    break;
+                }
                 break;
+
             //modificar una definicion
             case 4:
+                BorrarPantalla();
+                fila = (ANCHO-9)/2;
+                MoverCursor(fila,0);
+                printf("Modificar\n");
+                printf("Ingrese la palabra de la definicion a modificar: ");
+                fgets(e.p, sizeof(e.p), stdin);
+                limpiarbuffer();
+                /* funcion para busqueda de palabra y debe regresar la lista y ubicacion de la palabra o en caso de no estar imprimir el error*/
+                printf("Palabra encontrada.\n Ingrese la nueva definicion para la palabra %s",e.p);
+                fgets(e.d, sizeof(e.d), stdin);
+                limpiarbuffer();
+                //funcion para reemplazar nodo anterior por el nuevo
+                BorrarPantalla();
+                MoverCursor(0,0);
+                printf("Definicion cambiada correctamente.\n");
+                printf("Estadisticas:\n");
+                //imprimir estadisticas solicitadas
                 break;
+
             //eliminar una palabra(definicion incluida)
             case 5:
+                BorrarPantalla();
+                fila = (ANCHO-8)/2;
+                MoverCursor(fila,0);
+                printf("Eliminar\n");
+                printf("Ingrese la palabra que desea eliminar: ");
+                fgets(e.p, sizeof(e.p), stdin);
+                //funcion para buscar ubicacion de la palabra
+                //funcion para borrar nodo y reconectar en caso de ser necesario
+                printf("\nPalabra Eliminada con exicto.\n");
+                printf("Estadisticas:\n");
+                //imprimir estadisticas
                 break;
+
             //ver estadisticas hash
             case 6:
+                BorrarPantalla();
+                fila = (ANCHO-12)/2;
+                MoverCursor(fila,0);
+                printf("Estadisticas");
+                printf("\n");
                 break;
             //salir
             case 7:
