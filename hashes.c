@@ -1,4 +1,4 @@
-/*libreria dedicada a los 2 niveles de hasheo, cada uno en referencia al mejor numero segunSheldon Cooper
+/*libreria dedicada a los 2 niveles de hasheo, cada uno en referencia al mejor numero segun Sheldon Cooper
 personaje principal de la serie The Big Bang Theory, el numero primo 73*/
 
 #include <stdio.h>
